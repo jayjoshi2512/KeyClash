@@ -6,7 +6,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .layoutWrapper {
@@ -1019,6 +1020,120 @@
   min-height: 250px;
   display: flex;
   flex-direction: column;
+}
+
+/* Feature: Streak & PB Badges */
+.streakBadge,
+.pbBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: 0.6rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  vertical-align: middle;
+}
+
+.streakBadge {
+  background: rgba(239, 138, 23, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(239, 138, 23, 0.2);
+}
+
+.pbBadge {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+/* Feature: PB Delta on Results */
+.pbDelta {
+  width: 100%;
+  text-align: center;
+  padding: 0.5rem 0.8rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.pbNew {
+  color: #22c55e;
+}
+
+.pbTied {
+  color: var(--accent);
+}
+
+.pbBelow {
+  color: var(--text-muted);
+}
+
+/* Feature: Mistake Heatmap */
+.heatmapSection {
+  margin-top: 2rem;
+  width: 100%;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.01);
+}
+
+.heatmapKeyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4vw;
+  margin-top: 1rem;
+  padding: 0.8vw;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.heatmapRow {
+  display: flex;
+  gap: 0.4vw;
+  width: 100%;
+  margin-bottom: 0.4vw;
+}
+
+.heatmapRow:last-child {
+  margin-bottom: 0;
+}
+
+.heatmapKey {
+  height: 46px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 4px solid rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transition: all 0.2s ease;
+  position: relative;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.03);
+}
+
+.heatmapLabel {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.5px;
+}
+
+.heatmapCount {
+  font-size: 0.6rem;
+  font-weight: 900;
+  color: #fff;
+  background: rgba(239, 68, 68, 0.65);
+  padding: 1px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 /* Live Background Mechanical Keyboard — centered behind content, full viewport width */

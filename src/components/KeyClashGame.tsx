@@ -133,6 +133,16 @@ export default function KeyClashGame() {
   const [customText, setCustomText] = useState<string>("");
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
 
+  // Feature: Mistake Heatmap — track which keys were mistyped
+  const [mistakeKeys, setMistakeKeys] = useState<Record<string, number>>({});
+
+  // Feature: Personal Best
+  const [personalBest, setPersonalBest] = useState<{ wpm: number; accuracy: number } | null>(null);
+
+  // Feature: Streak Counter
+  const [streak, setStreak] = useState<number>(0);
+  const [dailyGoal, setDailyGoal] = useState<{ completed: number; target: number }>({ completed: 0, target: 3 });
+
   // Sharing Feedback
   const [copyFeedback, setCopyFeedback] = useState<string>("Copy Duel Link");
 
@@ -231,6 +241,102 @@ export default function KeyClashGame() {
     }
     return correct;
   };
+
+  // Feature: Personal Best — load PB for current category
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const key = `keyclash-pb-${currentCategory}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        setPersonalBest(JSON.parse(saved));
+      } catch { setPersonalBest(null); }
+    } else {
+      setPersonalBest(null);
+    }
+  }, [currentCategory]);
+
+  // Feature: Streak Counter — load streak on mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const streakData = localStorage.getItem("keyclash-streak");
+    if (streakData) {
+      try {
+        const parsed = JSON.parse(streakData);
+        const today = new Date().toDateString();
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        if (parsed.lastDate === today) {
+          setStreak(parsed.count);
+          setDailyGoal({ completed: parsed.todayCompleted || 0, target: 3 });
+        } else if (parsed.lastDate === yesterday) {
+          setStreak(parsed.count);
+          setDailyGoal({ completed: 0, target: 3 });
+        } else {
+          setStreak(0);
+          setDailyGoal({ completed: 0, target: 3 });
+        }
+      } catch {
+        setStreak(0);
+      }
+    }
+  }, []);
+
+  // Feature: Save PB + update streak + save instant replay on completion
+  useEffect(() => {
+    if (!isCompleted || !endTime || !startTime) return;
+    const finalMs = endTime - startTime;
+    const finalMin = finalMs / 60000;
+    const finalCorrect = calculateCorrectChars(typedText, passage.text);
+    const finalWpm = finalMin > 0 ? Math.round((finalCorrect / 5) / finalMin) : 0;
+    const totalKeys = keystrokes.filter(k => k.key !== "Backspace").length;
+    const finalAcc = totalKeys > 0 ? Math.round((finalCorrect / totalKeys) * 100) : 100;
+
+    // Save PB
+    const pbKey = `keyclash-pb-${currentCategory}`;
+    const existing = localStorage.getItem(pbKey);
+    let existingPb = existing ? JSON.parse(existing) : null;
+    if (!existingPb || finalWpm > existingPb.wpm) {
+      const newPb = { wpm: finalWpm, accuracy: finalAcc };
+      localStorage.setItem(pbKey, JSON.stringify(newPb));
+      setPersonalBest(newPb);
+    }
+
+    // Update streak
+    const today = new Date().toDateString();
+    const streakData = localStorage.getItem("keyclash-streak");
+    let streakObj = streakData ? JSON.parse(streakData) : { count: 0, lastDate: "", todayCompleted: 0 };
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+    let newCompleted = (streakObj.lastDate === today ? (streakObj.todayCompleted || 0) : 0) + 1;
+    let newCount = streakObj.count;
+
+    if (streakObj.lastDate !== today) {
+      if (streakObj.lastDate === yesterday) {
+        newCount = streakObj.count + 1;
+      } else if (streakObj.lastDate !== today) {
+        newCount = 1;
+      }
+    }
+
+    const updatedStreak = { count: newCount, lastDate: today, todayCompleted: newCompleted };
+    localStorage.setItem("keyclash-streak", JSON.stringify(updatedStreak));
+    setStreak(newCount);
+    setDailyGoal({ completed: newCompleted, target: 3 });
+
+    // Feature: Instant Replay Ghost — save this run's keystrokes
+    if (!ghostActive && keystrokes.length > 0) {
+      const replayData = {
+        passageId: passage.id,
+        passageText: passage.text,
+        keystrokes: keystrokes,
+        wpm: finalWpm,
+        accuracy: finalAcc,
+        category: currentCategory
+      };
+      localStorage.setItem("keyclash-last-run", JSON.stringify(replayData));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isCompleted]);
 
   // Update Caret Positions
   const updateCarets = useCallback(() => {
@@ -347,6 +453,7 @@ export default function KeyClashGame() {
     setGhostWpmHistory([]);
     setGhostCompleted(false);
     setCopyFeedback("Copy Duel Link");
+    setMistakeKeys({});
 
     if (newPassage) {
       // Clear url search params (enter solo mode)
@@ -535,6 +642,30 @@ export default function KeyClashGame() {
     }
 
     setTypedText(value);
+
+    // Feature: Track mistake keys for heatmap
+    if (!isBackspace && value.length <= passage.text.length) {
+      const charIdx = value.length - 1;
+      if (charIdx >= 0 && value[charIdx] !== passage.text[charIdx]) {
+        const expectedChar = passage.text[charIdx].toUpperCase();
+        // Map char to key code for heatmap
+        const charToCode: Record<string, string> = {
+          'A':'KeyA','B':'KeyB','C':'KeyC','D':'KeyD','E':'KeyE','F':'KeyF','G':'KeyG',
+          'H':'KeyH','I':'KeyI','J':'KeyJ','K':'KeyK','L':'KeyL','M':'KeyM','N':'KeyN',
+          'O':'KeyO','P':'KeyP','Q':'KeyQ','R':'KeyR','S':'KeyS','T':'KeyT','U':'KeyU',
+          'V':'KeyV','W':'KeyW','X':'KeyX','Y':'KeyY','Z':'KeyZ',
+          '0':'Digit0','1':'Digit1','2':'Digit2','3':'Digit3','4':'Digit4',
+          '5':'Digit5','6':'Digit6','7':'Digit7','8':'Digit8','9':'Digit9',
+          ' ':'Space',',':'Comma','.':'Period','/':'Slash',';':'Semicolon',
+          "'":'Quote','-':'Minus','=':'Equal','[':'BracketLeft',']':'BracketRight',
+          '\\':'Backslash'
+        };
+        const code = charToCode[expectedChar] || charToCode[expectedChar.toLowerCase()] || '';
+        if (code) {
+          setMistakeKeys(prev => ({ ...prev, [code]: (prev[code] || 0) + 1 }));
+        }
+      }
+    }
 
     // Finish test when text completed
     if (value.length === passage.text.length) {
@@ -812,7 +943,19 @@ export default function KeyClashGame() {
           <h1 className={styles.logo}>
             <span className={styles.logoIcon}>⌨</span> KeyClash
           </h1>
-          <p className={styles.subTitle}>Asynchronous keyboard typing duels</p>
+          <p className={styles.subTitle}>
+            Asynchronous keyboard typing duels
+            {streak > 0 && (
+              <span className={styles.streakBadge} title={`${streak} day streak! ${dailyGoal.completed}/${dailyGoal.target} today`}>
+                🔥 {streak}
+              </span>
+            )}
+            {personalBest && (
+              <span className={styles.pbBadge} title={`Personal best in ${currentCategory}`}>
+                🏆 {personalBest.wpm} WPM
+              </span>
+            )}
+          </p>
         </div>
 
         <div className={styles.controls}>
@@ -1219,6 +1362,19 @@ export default function KeyClashGame() {
                 </div>
               )}
 
+              {/* Personal Best comparison */}
+              {personalBest && (
+                <div className={styles.pbDelta}>
+                  {wpm > personalBest.wpm ? (
+                    <span className={styles.pbNew}>🎉 New Personal Best! +{wpm - personalBest.wpm} WPM</span>
+                  ) : wpm === personalBest.wpm ? (
+                    <span className={styles.pbTied}>🏆 Tied your PB: {personalBest.wpm} WPM</span>
+                  ) : (
+                    <span className={styles.pbBelow}>🏆 PB: {personalBest.wpm} WPM ({personalBest.wpm - wpm} WPM away)</span>
+                  )}
+                </div>
+              )}
+
               {/* Action trigger row */}
               <div className={styles.actionRow}>
                 <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={copyChallengeLink}>
@@ -1230,10 +1386,30 @@ export default function KeyClashGame() {
                 <button className={styles.btn} onClick={() => resetGame(true)}>
                   ✨ New (Solo)
                 </button>
+                {/* Instant Replay Ghost button */}
+                {!ghostActive && (
+                  <button
+                    className={styles.btn}
+                    onClick={() => {
+                      const lastRun = localStorage.getItem("keyclash-last-run");
+                      if (lastRun) {
+                        const data = JSON.parse(lastRun);
+                        setPassage({ id: data.passageId, text: data.passageText, source: "Instant Replay", category: data.category });
+                        setGhostActive(true);
+                        setGhostKeystrokes(data.keystrokes);
+                        setGhostWpm(data.wpm);
+                        setGhostAccuracy(data.accuracy);
+                        resetGame(false);
+                      }
+                    }}
+                  >
+                    👻 Race Your Last Run
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Right Column: Chart */}
+            {/* Right Column: WPM progression chart */}
             <div className={styles.resultsRightCol}>
               <div className={styles.chartContainer}>
                 <div className={styles.chartTitle}>WPM Progression Timeline</div>
@@ -1241,6 +1417,44 @@ export default function KeyClashGame() {
               </div>
             </div>
           </div>
+
+          {/* Full-Width Mistake Heatmap Section below the two-column stats grid */}
+          {Object.keys(mistakeKeys).length > 0 && (
+            <div className={styles.heatmapSection}>
+              <div className={styles.chartTitle}>Mistake Heatmap — Keys you struggled with</div>
+              <div className={styles.heatmapKeyboard}>
+                {KEYBOARD_LAYOUT.map((row, rIdx) => (
+                  <div key={rIdx} className={styles.heatmapRow}>
+                    {row.map((key) => {
+                      const count = mistakeKeys[key.code] || 0;
+                      const maxMistakes = Math.max(...Object.values(mistakeKeys), 1);
+                      const intensity = count / maxMistakes;
+                      return (
+                        <div
+                          key={key.code}
+                          className={styles.heatmapKey}
+                          style={{
+                            flex: key.width ? parseFloat(key.width) : 1,
+                            background: count > 0
+                              ? `rgba(239, 68, 68, ${0.15 + intensity * 0.55})`
+                              : 'var(--glass-bg)',
+                            borderColor: count > 0
+                              ? `rgba(239, 68, 68, ${0.4 + intensity * 0.45})`
+                              : 'var(--glass-border)',
+                            boxShadow: count > 0 ? `0 0 10px rgba(239, 68, 68, ${0.15 + intensity * 0.3})` : 'none'
+                          }}
+                          title={count > 0 ? `${key.label}: ${count} mistake${count > 1 ? 's' : ''}` : `${key.label}: Perfect`}
+                        >
+                          <span className={styles.heatmapLabel}>{key.label}</span>
+                          {count > 0 && <span className={styles.heatmapCount}>{count}</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
