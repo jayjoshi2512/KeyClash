@@ -11,6 +11,84 @@ interface Keystroke {
   dt: number;
 }
 
+const KEYBOARD_LAYOUT = [
+  // Row 1
+  [
+    { code: "Escape", label: "ESC", width: "1.2fr" },
+    { code: "Digit1", label: "1" },
+    { code: "Digit2", label: "2" },
+    { code: "Digit3", label: "3" },
+    { code: "Digit4", label: "4" },
+    { code: "Digit5", label: "5" },
+    { code: "Digit6", label: "6" },
+    { code: "Digit7", label: "7" },
+    { code: "Digit8", label: "8" },
+    { code: "Digit9", label: "9" },
+    { code: "Digit0", label: "0" },
+    { code: "Minus", label: "-" },
+    { code: "Equal", label: "=" },
+    { code: "Backspace", label: "BACKSPACE", width: "2fr" }
+  ],
+  // Row 2
+  [
+    { code: "Tab", label: "TAB", width: "1.5fr" },
+    { code: "KeyQ", label: "Q" },
+    { code: "KeyW", label: "W" },
+    { code: "KeyE", label: "E" },
+    { code: "KeyR", label: "R" },
+    { code: "KeyT", label: "T" },
+    { code: "KeyY", label: "Y" },
+    { code: "KeyU", label: "U" },
+    { code: "KeyI", label: "I" },
+    { code: "KeyO", label: "O" },
+    { code: "KeyP", label: "P" },
+    { code: "BracketLeft", label: "[" },
+    { code: "BracketRight", label: "]" },
+    { code: "Backslash", label: "\\", width: "1.5fr" }
+  ],
+  // Row 3
+  [
+    { code: "CapsLock", label: "CAPS", width: "1.8fr" },
+    { code: "KeyA", label: "A" },
+    { code: "KeyS", label: "S" },
+    { code: "KeyD", label: "D" },
+    { code: "KeyF", label: "F" },
+    { code: "KeyG", label: "G" },
+    { code: "KeyH", label: "H" },
+    { code: "KeyJ", label: "J" },
+    { code: "KeyK", label: "K" },
+    { code: "KeyL", label: "L" },
+    { code: "Semicolon", label: ";" },
+    { code: "Quote", label: "'" },
+    { code: "Enter", label: "ENTER", width: "2.2fr" }
+  ],
+  // Row 4
+  [
+    { code: "ShiftLeft", label: "SHIFT", width: "2.4fr" },
+    { code: "KeyZ", label: "Z" },
+    { code: "KeyX", label: "X" },
+    { code: "KeyC", label: "C" },
+    { code: "KeyV", label: "V" },
+    { code: "KeyB", label: "B" },
+    { code: "KeyN", label: "N" },
+    { code: "KeyM", label: "M" },
+    { code: "Comma", label: "," },
+    { code: "Period", label: "." },
+    { code: "Slash", label: "/" },
+    { code: "ShiftRight", label: "SHIFT", width: "2.4fr" }
+  ],
+  // Row 5
+  [
+    { code: "ControlLeft", label: "CTRL", width: "1.5fr" },
+    { code: "MetaLeft", label: "WIN", width: "1.2fr" },
+    { code: "AltLeft", label: "ALT", width: "1.2fr" },
+    { code: "Space", label: "SPACE", width: "7fr" },
+    { code: "AltRight", label: "ALT", width: "1.2fr" },
+    { code: "MetaRight", label: "WIN", width: "1.2fr" },
+    { code: "ControlRight", label: "CTRL", width: "1.5fr" }
+  ]
+];
+
 export default function KeyClashGame() {
   // Config States
   const [themeId, setThemeId] = useState<string>("creamy-obsidian");
@@ -53,6 +131,7 @@ export default function KeyClashGame() {
   // Modal States
   const [showCustomModal, setShowCustomModal] = useState<boolean>(false);
   const [customText, setCustomText] = useState<string>("");
+  const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
 
   // Sharing Feedback
   const [copyFeedback, setCopyFeedback] = useState<string>("Copy Duel Link");
@@ -69,6 +148,39 @@ export default function KeyClashGame() {
   const ghostTypedTextRef = useRef(ghostTypedText);
   useEffect(() => { typedTextRef.current = typedText; }, [typedText]);
   useEffect(() => { ghostTypedTextRef.current = ghostTypedText; }, [ghostTypedText]);
+
+  // Real-time keyboard tracking
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      setPressedKeys(prev => {
+        const copy = new Set(prev);
+        copy.add(e.code);
+        return copy;
+      });
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      setPressedKeys(prev => {
+        const copy = new Set(prev);
+        copy.delete(e.code);
+        return copy;
+      });
+    };
+
+    const handleBlur = () => {
+      setPressedKeys(new Set());
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleBlur);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleBlur);
+    };
+  }, []);
 
   // Serialization Helper
   const serializeKeystrokes = (strokes: Keystroke[]): string => {
@@ -496,8 +608,11 @@ export default function KeyClashGame() {
 
   const totalTimeMs = endTime && startTime ? endTime - startTime : 0;
   const minutesElapsed = totalTimeMs / 60000;
-  const wpm = minutesElapsed > 0 ? Math.round((correctCharactersCount / 5) / minutesElapsed) : 0;
-  const rawWpm = minutesElapsed > 0 ? Math.round((totalKeysPressed / 5) / minutesElapsed) : 0;
+  // Use live secondsElapsed during typing, precise endTime for final result
+  const liveMinutes = secondsElapsed > 0 ? secondsElapsed / 60 : 0;
+  const activeMinutes = minutesElapsed > 0 ? minutesElapsed : liveMinutes;
+  const wpm = activeMinutes > 0 ? Math.round((correctCharactersCount / 5) / activeMinutes) : 0;
+  const rawWpm = activeMinutes > 0 ? Math.round((totalKeysPressed / 5) / activeMinutes) : 0;
 
   // Race progress percentages
   const playerProgress = (correctCharactersCount / passage.text.length) * 100;
@@ -671,7 +786,8 @@ export default function KeyClashGame() {
   const hasError = typedText.length > 0 && typedText[typedText.length - 1] !== passage.text[typedText.length - 1];
 
   return (
-    <div className={`${styles.layoutWrapper} ${isStarted && !isCompleted && isFocused ? styles.focusedMode : ""}`}>
+    <div className={styles.mainWrapper}>
+      <div className={`${styles.layoutWrapper} ${isStarted && !isCompleted && isFocused ? styles.focusedMode : ""}`}>
       {/* Left Sidebar Ad Placeholder */}
       <aside className={styles.sideAdLeft}>
         <div className={styles.adLabel}>Sponsor</div>
@@ -985,38 +1101,62 @@ export default function KeyClashGame() {
             </div>
           </div>
 
-          {/* Running indicators */}
-          {isStarted && (
-            <div className={styles.liveStats}>
-              <div>
-                Time: <span className={styles.liveStatValue}>{secondsElapsed}s</span>
-              </div>
-              <div style={{ display: "flex", gap: "1.5rem" }}>
-                {ghostActive && (
-                  <div>
-                    Ghost:{" "}
-                    <span style={{ color: "var(--ghost-caret)" }}>
-                      {Math.round(ghostProgress)}% ({ghostWpm} WPM)
-                    </span>
-                  </div>
-                )}
-                <div>
-                  Accuracy: <span className={styles.liveStatValue}>{accuracy}%</span>
+          {/* Space optimized running indicators / speedometer */}
+          {!isCompleted && (
+            <div className={styles.liveDashboard}>
+              {/* Speedometer */}
+              <div className={styles.speedometerContainer}>
+                <svg className={styles.speedometerGauge} viewBox="0 0 100 50">
+                  <path
+                    d="M 15 45 A 30 30 0 0 1 85 45"
+                    fill="none"
+                    stroke="var(--glass-border)"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M 15 45 A 30 30 0 0 1 85 45"
+                    fill="none"
+                    stroke="var(--accent)"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    strokeDasharray="94.2"
+                    strokeDashoffset={94.2 - Math.min(1, wpm / 150) * 94.2}
+                    style={{ transition: "stroke-dashoffset 0.15s ease" }}
+                  />
+                </svg>
+                <div className={styles.speedometerValue}>
+                  <span className={styles.speedNum}>{Math.round(wpm)}</span>
+                  <span className={styles.speedUnit}>WPM</span>
                 </div>
-                <div>
-                  Current WPM:{" "}
-                  <span className={styles.liveStatValue}>
-                    {secondsElapsed > 0
-                      ? Math.round((correctCharactersCount / 5) / (secondsElapsed / 60))
-                      : 0}
+              </div>
+
+              {/* Accuracy */}
+              <div className={styles.compactStatItem}>
+                <span className={styles.compactStatLabel}>Accuracy</span>
+                <span className={styles.compactStatVal}>{Math.round(accuracy)}%</span>
+              </div>
+
+              {/* Time */}
+              <div className={styles.compactStatItem}>
+                <span className={styles.compactStatLabel}>Time</span>
+                <span className={styles.compactStatVal}>{secondsElapsed}s</span>
+              </div>
+
+              {/* Ghost comparison overlay if active */}
+              {ghostActive && (
+                <div className={styles.compactStatItem}>
+                  <span className={styles.compactStatLabel}>Ghost</span>
+                  <span className={styles.compactStatVal} style={{ color: "var(--ghost-caret)" }}>
+                    {ghostWpm} <span style={{ fontSize: "0.7rem" }}>WPM</span>
                   </span>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </>
       ) : (
-        /* Results view panel */
+        /* Space-optimized results view panel */
         <div className={`${styles.results} glass`}>
           <div className={styles.banner}>
             {ghostActive ? (
@@ -1032,67 +1172,74 @@ export default function KeyClashGame() {
             )}
           </div>
 
-          <div className={styles.statsGrid}>
-            <div className={styles.statCard}>
-              <span className={styles.statLabel}>WPM</span>
-              <span className={styles.statValue}>{wpm}</span>
-              <span className={styles.statSubtext}>Words Per Minute</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statLabel}>Accuracy</span>
-              <span className={styles.statValue}>{accuracy}%</span>
-              <span className={styles.statSubtext}>Keys correctness</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statLabel}>Raw WPM</span>
-              <span className={styles.statValue}>{rawWpm}</span>
-              <span className={styles.statSubtext}>Includes mistakes</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statLabel}>Time Taken</span>
-              <span className={styles.statValue}>{(totalTimeMs / 1000).toFixed(1)}s</span>
-              <span className={styles.statSubtext}>Elapsed seconds</span>
-            </div>
-          </div>
-
-          {/* Comparison summary card */}
-          {ghostActive && (
-            <div className={styles.comparison}>
-              <div className={styles.compareColumn}>
-                <span className={styles.compareTitle}>You</span>
-                <span className={styles.compareWpm} style={{ color: "var(--accent)" }}>
-                  {wpm} WPM / {accuracy}% Acc
-                </span>
+          <div className={styles.resultsLayout}>
+            {/* Left Column: Stats & Action row */}
+            <div className={styles.resultsLeftCol}>
+              <div className={styles.statsGrid}>
+                <div className={styles.statCard}>
+                  <span className={styles.statLabel}>WPM</span>
+                  <span className={styles.statValue}>{wpm}</span>
+                  <span className={styles.statSubtext}>Words Per Minute</span>
+                </div>
+                <div className={styles.statCard}>
+                  <span className={styles.statLabel}>Accuracy</span>
+                  <span className={styles.statValue}>{accuracy}%</span>
+                  <span className={styles.statSubtext}>Keys correctness</span>
+                </div>
+                <div className={styles.statCard}>
+                  <span className={styles.statLabel}>Raw WPM</span>
+                  <span className={styles.statValue}>{rawWpm}</span>
+                  <span className={styles.statSubtext}>Includes mistakes</span>
+                </div>
+                <div className={styles.statCard}>
+                  <span className={styles.statLabel}>Time Taken</span>
+                  <span className={styles.statValue}>{(totalTimeMs / 1000).toFixed(1)}s</span>
+                  <span className={styles.statSubtext}>Elapsed seconds</span>
+                </div>
               </div>
-              <div
-                className={styles.compareColumn}
-                style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", paddingLeft: "3rem" }}
-              >
-                <span className={styles.compareTitle}>Ghost</span>
-                <span className={styles.compareWpm} style={{ color: "var(--ghost-caret)" }}>
-                  {ghostWpm} WPM / {Math.round(ghostAccuracy)}% Acc
-                </span>
+
+              {/* Comparison summary card */}
+              {ghostActive && (
+                <div className={styles.comparison}>
+                  <div className={styles.compareColumn}>
+                    <span className={styles.compareTitle}>You</span>
+                    <span className={styles.compareWpm} style={{ color: "var(--accent)" }}>
+                      {wpm} WPM / {accuracy}% Acc
+                    </span>
+                  </div>
+                  <div
+                    className={styles.compareColumn}
+                    style={{ borderLeft: "1px solid rgba(255,255,255,0.06)", paddingLeft: "2rem" }}
+                  >
+                    <span className={styles.compareTitle}>Ghost</span>
+                    <span className={styles.compareWpm} style={{ color: "var(--ghost-caret)" }}>
+                      {ghostWpm} WPM / {Math.round(ghostAccuracy)}% Acc
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Action trigger row */}
+              <div className={styles.actionRow}>
+                <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={copyChallengeLink}>
+                  🔗 {copyFeedback}
+                </button>
+                <button className={styles.btn} onClick={() => resetGame(false)}>
+                  🔄 Restart Duel
+                </button>
+                <button className={styles.btn} onClick={() => resetGame(true)}>
+                  ✨ New (Solo)
+                </button>
               </div>
             </div>
-          )}
 
-          {/* Performance chart */}
-          <div className={styles.chartContainer}>
-            <div className={styles.chartTitle}>WPM Timeline Progression</div>
-            {renderSvgChart()}
-          </div>
-
-          {/* Action trigger row */}
-          <div className={styles.actionRow}>
-            <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={copyChallengeLink}>
-              🔗 {copyFeedback}
-            </button>
-            <button className={styles.btn} onClick={() => resetGame(false)}>
-              🔄 Restart Duel
-            </button>
-            <button className={styles.btn} onClick={() => resetGame(true)}>
-              ✨ New Test (Solo)
-            </button>
+            {/* Right Column: Chart */}
+            <div className={styles.resultsRightCol}>
+              <div className={styles.chartContainer}>
+                <div className={styles.chartTitle}>WPM Progression Timeline</div>
+                {renderSvgChart()}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -1122,6 +1269,7 @@ export default function KeyClashGame() {
       </div>
     </aside>
 
+    {/* Live dynamic virtual mechanical keyboard (rendered in layout wrapper background) */}
     {/* Custom Text Modal */}
     {showCustomModal && (
       <div className={styles.modalOverlay}>
@@ -1152,6 +1300,29 @@ export default function KeyClashGame() {
         </div>
       </div>
     )}
-  </div>
-  );
+  </div> {/* Closes styles.layoutWrapper */}
+
+  {/* Live dynamic virtual mechanical keyboard (rendered in layout wrapper background) */}
+  {!isCompleted && (
+    <div className={styles.keyboardContainer}>
+      {KEYBOARD_LAYOUT.map((row, rIdx) => (
+        <div key={rIdx} className={styles.keyboardRow}>
+          {row.map((key) => {
+            const isActive = pressedKeys.has(key.code);
+            return (
+              <div
+                key={key.code}
+                className={`${styles.keycap} ${isActive ? styles.keycapActive : ""}`}
+                style={{ flex: key.width ? parseFloat(key.width) : 1 }}
+              >
+                <span className={styles.keyLabel}>{key.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+);
 }

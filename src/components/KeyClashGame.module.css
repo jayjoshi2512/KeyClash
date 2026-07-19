@@ -1,3 +1,14 @@
+.mainWrapper {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
 .layoutWrapper {
   display: grid;
   grid-template-columns: 160px 1fr 160px;
@@ -9,6 +20,7 @@
   padding: 1rem 1.5rem 2.5rem;
   align-items: start;
   transition: all 0.4s ease;
+  position: relative;
 }
 
 .container {
@@ -20,6 +32,7 @@
   padding-top: 0;
   gap: 1.8rem;
   z-index: 10;
+  position: relative;
 }
 
 .sideAdLeft,
@@ -890,6 +903,185 @@
   font-size: 0.75rem;
 }
 
+/* Live Dashboard & Speedometer */
+.liveDashboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5rem;
+  width: 100%;
+  padding: 0.5rem 1.2rem;
+  background: var(--bg-muted);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.4rem;
+  animation: fadeIn 0.4s ease;
+}
+
+.speedometerContainer {
+  position: relative;
+  width: 105px;
+  height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+
+.speedometerGauge {
+  width: 100%;
+  height: 100%;
+}
+
+.speedometerValue {
+  position: absolute;
+  bottom: -2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.speedNum {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.speedUnit {
+  font-size: 0.52rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+
+.compactStatItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.compactStatLabel {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+}
+
+.compactStatVal {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+/* Space-Optimized Results Layout */
+.resultsLayout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.8rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.resultsLeftCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.resultsLeftCol .statsGrid {
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 1rem !important;
+}
+
+.resultsLeftCol .statCard {
+  padding: 0.8rem 1rem !important;
+}
+
+.resultsLeftCol .statValue {
+  font-size: 1.6rem !important;
+}
+
+.resultsRightCol {
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+}
+
+.resultsRightCol .chartContainer {
+  width: 100%;
+  height: 100%;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Live Background Mechanical Keyboard — centered behind content, full viewport width */
+.keyboardContainer {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 100vw;
+  padding: 0 1.5vw;
+  background: transparent;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  /* NO container opacity — per-key opacity instead so active keys pop */
+}
+
+.keyboardRow {
+  display: flex;
+  gap: 0.4vw;
+  margin-bottom: 0.4vw;
+  width: 100%;
+}
+
+.keyboardRow:last-child {
+  margin-bottom: 0;
+}
+
+.keycap {
+  height: 7vh;
+  min-height: 44px;
+  background: linear-gradient(180deg, #28282c 0%, #18181b 100%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 5px solid #0a0a0c;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.04s ease, border-bottom-width 0.04s ease,
+              box-shadow 0.08s ease, opacity 0.06s ease;
+  user-select: none;
+  color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.04);
+  opacity: 0.08; /* subtle idle keys */
+}
+
+.keycapActive {
+  transform: translateY(4px);
+  border-bottom-width: 1px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.7), 0 0 12px var(--accent);
+  color: var(--accent) !important;
+  opacity: 0.25; /* subtle glow — noticeable but not distracting */
+}
+
+.keyLabel {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: inherit;
+}
+
 /* ==========================================================================
    Responsive Design / Production-Level Media Queries
    ========================================================================== */
@@ -935,6 +1127,15 @@
     font-size: 1.3rem;
     line-height: 1.9rem;
   }
+
+  .resultsLayout {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem;
+  }
+
+  .keyboardContainer {
+    display: none !important;
+  }
 }
 
 /* Mobile Screens */
@@ -976,6 +1177,24 @@
 
   .volumeSlider {
     width: 120px; /* larger slider on mobile for touch accuracy */
+  }
+
+  .liveDashboard {
+    gap: 1.2rem !important;
+    padding: 0.5rem 0.8rem !important;
+  }
+  
+  .speedometerContainer {
+    width: 90px !important;
+    height: 46px !important;
+  }
+  
+  .speedNum {
+    font-size: 1.05rem !important;
+  }
+
+  .compactStatVal {
+    font-size: 1rem !important;
   }
 
   .filters {
