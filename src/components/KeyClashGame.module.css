@@ -136,6 +136,16 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.logoContainer:hover .logo {
+  opacity: 0.85;
+}
+
+.logoContainer:active .logo {
+  transform: scale(0.98);
 }
 
 .logo {
@@ -317,6 +327,30 @@
   letter-spacing: 1px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+}
+
+.exitDuelBtn {
+  background: rgba(202, 71, 84, 0.08);
+  color: var(--error);
+  border: 1px solid rgba(202, 71, 84, 0.15);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.exitDuelBtn:hover {
+  background: var(--error);
+  color: var(--bg);
+  border-color: var(--error);
+  box-shadow: 0 2px 8px rgba(202, 71, 84, 0.2);
 }
 
 .trackRow {

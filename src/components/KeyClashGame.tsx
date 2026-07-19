@@ -688,7 +688,11 @@ export default function KeyClashGame() {
       <div className={styles.container}>
       {/* Header panel */}
       <header className={styles.header}>
-        <div className={styles.logoContainer}>
+        <div
+          className={styles.logoContainer}
+          onClick={() => resetGame(true)}
+          title="Reset to main dashboard"
+        >
           <h1 className={styles.logo}>
             <span className={styles.logoIcon}>⌨</span> KeyClash
           </h1>
@@ -809,30 +813,32 @@ export default function KeyClashGame() {
         </div>
       )}
 
-      {/* Duel header status banner */}
-      {ghostActive && !isCompleted && (
-        <div className={`${styles.trackTitle} width-full`}>
-          <span style={{ color: "var(--ghost-caret)", fontWeight: 800 }}>
-            👻 RACING GHOST ({ghostWpm} WPM, {Math.round(ghostAccuracy)}% Acc)
-          </span>
-          <button
-            className={styles.filterBtn}
-            style={{ padding: "0.2rem 0.6rem", fontSize: "0.75rem" }}
-            onClick={() => resetGame(true)}
-          >
-            Exit Duel (Solo Mode)
-          </button>
-        </div>
-      )}
-
       {/* Active gameplay elements */}
       {!isCompleted ? (
         <>
           {/* Race Track */}
           <div className={`${styles.trackContainer} glass`}>
             <div className={styles.trackTitle}>
-              <span>Race Progress</span>
-              <span>{Math.round(playerProgress)}% Completed</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span>Race Progress</span>
+                {ghostActive && (
+                  <span style={{ color: "var(--ghost-caret)", fontWeight: 700, fontSize: '0.72rem', textTransform: 'none' }}>
+                    (vs. 👻 {ghostWpm} WPM Ghost)
+                  </span>
+                )}
+              </span>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                {ghostActive && (
+                  <button
+                    className={styles.exitDuelBtn}
+                    onClick={() => resetGame(true)}
+                  >
+                    Exit Duel (Solo)
+                  </button>
+                )}
+                <span>{Math.round(playerProgress)}% Completed</span>
+              </div>
             </div>
 
             {/* Player Runner */}
