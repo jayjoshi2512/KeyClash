@@ -18,16 +18,16 @@ export const THEMES: Theme[] = [
   {
     id: "creamy-obsidian",
     name: "Creamy Obsidian",
-    background: "#151515",
-    backgroundMuted: "#1f1f1f",
-    text: "#e1dcd3",
-    textMuted: "#646669",
-    accent: "#e2b714",
-    accentMuted: "#a0810d",
-    error: "#ca4754",
-    errorMuted: "#7e2e37",
-    ghostCaret: "#a855f7", // purple ghost caret
-    glassBackground: "rgba(31, 31, 31, 0.45)",
+    background: "#111111",
+    backgroundMuted: "#1a1a1a",
+    text: "#d1c7bd", // warm bone white
+    textMuted: "#555555", // readable mid-grey (3.8:1 contrast ratio)
+    accent: "#e2b714", // warm gold
+    accentMuted: "#9a7d0e",
+    error: "#e06c75", // soft desaturated rose-red
+    errorMuted: "#95444b",
+    ghostCaret: "#a78bfa", // lavender ghost
+    glassBackground: "rgba(26, 26, 26, 0.45)",
     glassBorder: "rgba(226, 183, 20, 0.08)"
   },
   {
@@ -35,75 +35,75 @@ export const THEMES: Theme[] = [
     name: "Nord Frost",
     background: "#2e3440",
     backgroundMuted: "#3b4252",
-    text: "#d8dee9",
-    textMuted: "#4c566a",
-    accent: "#88c0d0",
+    text: "#eceff4", // frost white
+    textMuted: "#727d91", // slate grey
+    accent: "#88c0d0", // soft arctic ice blue
     accentMuted: "#5e81ac",
     error: "#bf616a",
     errorMuted: "#8c4a5c",
-    ghostCaret: "#b48ead", // frost pink ghost
+    ghostCaret: "#b48ead", // arctic pink
     glassBackground: "rgba(59, 66, 82, 0.45)",
     glassBorder: "rgba(136, 192, 208, 0.08)"
   },
   {
     id: "cyberpunk",
     name: "Cyberpunk",
-    background: "#08020f",
-    backgroundMuted: "#17082c",
-    text: "#00f0ff",
-    textMuted: "#6b0080",
-    accent: "#fcee0a",
-    accentMuted: "#ff007f",
-    error: "#ff003c",
-    errorMuted: "#80001f",
-    ghostCaret: "#00ff66", // green ghost
-    glassBackground: "rgba(23, 8, 44, 0.45)",
-    glassBorder: "rgba(252, 238, 10, 0.08)"
+    background: "#120e1c", // soft purple-black
+    backgroundMuted: "#1f1930",
+    text: "#a5f3fc", // warm pastel cyan
+    textMuted: "#635380", // readable medium violet-grey
+    accent: "#fde047", // soft warm pastel yellow
+    accentMuted: "#db2777",
+    error: "#f43f5e", // desaturated rose
+    errorMuted: "#9d174d",
+    ghostCaret: "#34d399", // mint green ghost
+    glassBackground: "rgba(31, 25, 48, 0.45)",
+    glassBorder: "rgba(253, 224, 71, 0.08)"
   },
   {
     id: "retro-typewriter",
     name: "Retro Typewriter",
-    background: "#f4ede8",
-    backgroundMuted: "#e8ded6",
-    text: "#353535",
-    textMuted: "#a09890",
-    accent: "#a92b2b",
-    accentMuted: "#7a1e1e",
-    error: "#b24c4c",
-    errorMuted: "#8b3535",
-    ghostCaret: "#4a7a8c", // blue-grey ghost
-    glassBackground: "rgba(232, 222, 214, 0.45)",
-    glassBorder: "rgba(169, 43, 43, 0.08)"
+    background: "#f4eae1", // vintage warm ivory
+    backgroundMuted: "#e8dad0",
+    text: "#2b2621", // soft coal black
+    textMuted: "#9e8e81", // readable vintage paper brown
+    accent: "#9a3412", // terracotta rust
+    accentMuted: "#7c2d12",
+    error: "#c2410c",
+    errorMuted: "#9a3412",
+    ghostCaret: "#0369a1", // blue-grey ghost
+    glassBackground: "rgba(232, 218, 208, 0.45)",
+    glassBorder: "rgba(154, 52, 18, 0.08)"
   },
   {
     id: "matrix-terminal",
     name: "Matrix Terminal",
-    background: "#040804",
-    backgroundMuted: "#0d1a0d",
-    text: "#4af626",
-    textMuted: "#164e0f",
-    accent: "#00ff00",
-    accentMuted: "#008800",
-    error: "#ff3333",
-    errorMuted: "#aa0000",
-    ghostCaret: "#00ffff", // cyan ghost
-    glassBackground: "rgba(13, 26, 13, 0.45)",
-    glassBorder: "rgba(0, 255, 0, 0.08)"
+    background: "#0c100c", // dark forest-black
+    backgroundMuted: "#182018",
+    text: "#a7f3d0", // soft mint green
+    textMuted: "#526c52", // readable pine green
+    accent: "#34d399", // gentle emerald green
+    accentMuted: "#059669",
+    error: "#f87171",
+    errorMuted: "#b91c1c",
+    ghostCaret: "#38bdf8", // cyber cyan ghost
+    glassBackground: "rgba(24, 32, 24, 0.45)",
+    glassBorder: "rgba(52, 211, 153, 0.08)"
   },
   {
     id: "sunset-violet",
     name: "Sunset Violet",
-    background: "#18122b",
-    backgroundMuted: "#2d1b4e",
-    text: "#e4d0d0",
-    textMuted: "#635985",
-    accent: "#ff007f",
-    accentMuted: "#b30059",
-    error: "#ff5757",
-    errorMuted: "#a12b2b",
-    ghostCaret: "#fcee0a", // yellow ghost
-    glassBackground: "rgba(45, 27, 78, 0.45)",
-    glassBorder: "rgba(255, 0, 127, 0.08)"
+    background: "#181326", // calm violet
+    backgroundMuted: "#28203f",
+    text: "#f5f3ff", // bright lavender silver
+    textMuted: "#7c729b", // violet grey
+    accent: "#f472b6", // soft pink sunset
+    accentMuted: "#be185d",
+    error: "#fda4af",
+    errorMuted: "#e11d48",
+    ghostCaret: "#fb7185", // soft rose ghost
+    glassBackground: "rgba(40, 32, 63, 0.45)",
+    glassBorder: "rgba(244, 114, 182, 0.08)"
   }
 ];
 
@@ -122,4 +122,5 @@ export const applyTheme = (theme: Theme) => {
   root.style.setProperty("--glass-bg", theme.glassBackground);
   root.style.setProperty("--glass-border", theme.glassBorder);
 };
+
 export { };

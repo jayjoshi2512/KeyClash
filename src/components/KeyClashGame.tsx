@@ -27,6 +27,7 @@ export default function KeyClashGame() {
   const [secondsElapsed, setSecondsElapsed] = useState<number>(0);
   const [keystrokes, setKeystrokes] = useState<Keystroke[]>([]);
   const [isFocused, setIsFocused] = useState<boolean>(true);
+  const [isTyping, setIsTyping] = useState<boolean>(false);
 
   // Time metrics
   const [startTime, setStartTime] = useState<number | null>(null);
@@ -61,6 +62,7 @@ export default function KeyClashGame() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const ghostTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const ghostIndexRef = useRef<number>(0);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Keep refs for interval calculations
   const typedTextRef = useRef(typedText);
@@ -226,6 +228,8 @@ export default function KeyClashGame() {
     setGhostTypedText("");
     setIsStarted(false);
     setIsCompleted(false);
+    setIsTyping(false);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     setSecondsElapsed(0);
     setPlayerWpmHistory([]);
     setGhostWpmHistory([]);
@@ -385,6 +389,13 @@ export default function KeyClashGame() {
     const value = e.target.value;
     if (value.length > passage.text.length) return;
 
+    // Handle isTyping state
+    setIsTyping(true);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+    }, 1000);
+
     const isBackspace = value.length < typedText.length;
     let keyName = "";
     if (isBackspace) {
@@ -416,8 +427,9 @@ export default function KeyClashGame() {
     // Finish test when text completed
     if (value.length === passage.text.length) {
       setIsCompleted(true);
+      setIsTyping(false);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       setEndTime(now);
-      if (ghostTimeoutRef.current) clearTimeout(ghostTimeoutRef.current);
 
       // Append final fractional data point to charts
       const finalSec = (now - (startTime || now)) / 1000;
@@ -656,8 +668,24 @@ export default function KeyClashGame() {
     );
   };
 
+  const hasError = typedText.length > 0 && typedText[typedText.length - 1] !== passage.text[typedText.length - 1];
+
   return (
-    <div className={styles.container}>
+    <div className={`${styles.layoutWrapper} ${isStarted && !isCompleted && isFocused ? styles.focusedMode : ""}`}>
+      {/* Left Sidebar Ad Placeholder */}
+      <aside className={styles.sideAdLeft}>
+        <div className={styles.adLabel}>Sponsor</div>
+        <div className={styles.adGraphic} />
+        <div className={styles.adText}>
+          <strong>KeyClash Premium</strong>
+          <p style={{ marginTop: '0.4rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+            Support minimal typing by purchasing premium physical keycaps.
+          </p>
+        </div>
+      </aside>
+
+      {/* Main typing container */}
+      <div className={styles.container}>
       {/* Header panel */}
       <header className={styles.header}>
         <div className={styles.logoContainer}>
@@ -669,38 +697,62 @@ export default function KeyClashGame() {
 
         <div className={styles.controls}>
           {/* Theme Selector */}
-          <div className={styles.controlGroup}>
-            <span className={styles.controlLabel}>Theme</span>
-            <select
-              className={styles.select}
-              value={themeId}
-              onChange={(e) => handleThemeChange(e.target.value)}
-            >
-              {THEMES.map(t => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
+          <div className={styles.ribbon}>
+            {THEMES.map(t => (
+              <button
+                key={t.id}
+                type="button"
+                className={`${styles.ribbonBtn} ${themeId === t.id ? styles.ribbonActive : ""}`}
+                onClick={() => handleThemeChange(t.id)}
+              >
+                {t.name}
+              </button>
+            ))}
           </div>
 
           {/* Switch Sound Selector */}
-          <div className={styles.controlGroup}>
-            <span className={styles.controlLabel}>Switches</span>
-            <select
-              className={styles.select}
-              value={switchType}
-              onChange={(e) => handleSwitchChange(e.target.value as SwitchType)}
+          <div className={styles.ribbon}>
+            <button
+              type="button"
+              className={`${styles.ribbonBtn} ${switchType === "creamy" ? styles.ribbonActive : ""}`}
+              onClick={() => handleSwitchChange("creamy")}
             >
-              <option value="creamy">Creamy POM (Lube)</option>
-              <option value="clicky">Blue Clicky</option>
-              <option value="retro">Retro Buckling Spring</option>
-              <option value="brown">Brown Tactile</option>
-              <option value="silent">Silent Linear</option>
-            </select>
+              POM Linear
+            </button>
+            <button
+              type="button"
+              className={`${styles.ribbonBtn} ${switchType === "clicky" ? styles.ribbonActive : ""}`}
+              onClick={() => handleSwitchChange("clicky")}
+            >
+              Clicky
+            </button>
+            <button
+              type="button"
+              className={`${styles.ribbonBtn} ${switchType === "retro" ? styles.ribbonActive : ""}`}
+              onClick={() => handleSwitchChange("retro")}
+            >
+              Spring
+            </button>
+            <button
+              type="button"
+              className={`${styles.ribbonBtn} ${switchType === "brown" ? styles.ribbonActive : ""}`}
+              onClick={() => handleSwitchChange("brown")}
+            >
+              Tactile
+            </button>
+            <button
+              type="button"
+              className={`${styles.ribbonBtn} ${switchType === "silent" ? styles.ribbonActive : ""}`}
+              onClick={() => handleSwitchChange("silent")}
+            >
+              Silent
+            </button>
           </div>
 
           {/* Volume Control */}
           <div className={styles.volumeControl}>
             <button
+              type="button"
               className={styles.volumeBtn}
               onClick={() => handleMutedChange(!isMuted)}
               title={isMuted ? "Unmute" : "Mute"}
@@ -787,6 +839,10 @@ export default function KeyClashGame() {
             <div className={styles.trackRow}>
               <div className={styles.trackLine}></div>
               <div
+                className={styles.playerProgressFill}
+                style={{ width: `${playerProgress}%` }}
+              />
+              <div
                 className={`${styles.runner} ${styles.playerRunner}`}
                 style={{ left: `${Math.min(96, Math.max(4, playerProgress))}%` }}
               >
@@ -800,6 +856,10 @@ export default function KeyClashGame() {
               <div className={styles.trackRow}>
                 <div className={styles.trackLine}></div>
                 <div
+                  className={styles.ghostProgressFill}
+                  style={{ width: `${ghostProgress}%` }}
+                />
+                <div
                   className={`${styles.runner} ${styles.ghostRunner}`}
                   style={{ left: `${Math.min(96, Math.max(4, ghostProgress))}%` }}
                 >
@@ -812,7 +872,7 @@ export default function KeyClashGame() {
 
           {/* Typing Engine */}
           <div
-            className={`${styles.typingWrapper} glass`}
+            className={`${styles.typingWrapper} ${hasError ? styles.wrapperError : ""} glass`}
             onClick={() => textareaRef.current?.focus()}
           >
             {/* Unfocused overlay warn */}
@@ -829,7 +889,7 @@ export default function KeyClashGame() {
 
             {/* Caret positioning indicator */}
             <div
-              className={styles.caret}
+              className={`${styles.caret} ${(!isStarted || !isTyping || !isFocused) ? styles.caretBlink : ""}`}
               style={{
                 transform: caretStyle.transform,
                 height: caretStyle.height,
@@ -910,7 +970,7 @@ export default function KeyClashGame() {
                         data-index={word.spaceIndex}
                         className={classes}
                       >
-                        &nbsp;
+                        {" "}
                       </span>
                     );
                   })()}
@@ -1042,37 +1102,50 @@ export default function KeyClashGame() {
           </div>
         )}
       </footer>
+    </div> {/* Closes styles.container */}
 
-      {/* Custom Text Modal */}
-      {showCustomModal && (
-        <div className={styles.modalOverlay}>
-          <div className={`${styles.modal} glass`}>
-            <h3 className={styles.modalTitle}>Paste Custom Passage</h3>
-            <textarea
-              className={styles.textareaCustom}
-              placeholder="Type or paste custom text here (ideal length: 20-60 words)..."
-              value={customText}
-              onChange={(e) => setCustomText(e.target.value)}
-            />
-            <div className={styles.modalActions}>
-              <button
-                className={styles.btn}
-                style={{ padding: "0.5rem 1rem" }}
-                onClick={() => setShowCustomModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                style={{ padding: "0.5rem 1.2rem" }}
-                onClick={handleCustomTextSubmit}
-              >
-                Start Typing
-              </button>
-            </div>
+    {/* Right Sidebar Ad Placeholder */}
+    <aside className={styles.sideAdRight}>
+      <div className={styles.adLabel}>Featured</div>
+      <div className={styles.adGraphic} />
+      <div className={styles.adText}>
+        <strong>Acoustic Labs</strong>
+        <p style={{ marginTop: '0.4rem', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+          Discover lubed switches and desk mats designed for typists.
+        </p>
+      </div>
+    </aside>
+
+    {/* Custom Text Modal */}
+    {showCustomModal && (
+      <div className={styles.modalOverlay}>
+        <div className={`${styles.modal} glass`}>
+          <h3 className={styles.modalTitle}>Paste Custom Passage</h3>
+          <textarea
+            className={styles.textareaCustom}
+            placeholder="Type or paste custom text here (ideal length: 20-60 words)..."
+            value={customText}
+            onChange={(e) => setCustomText(e.target.value)}
+          />
+          <div className={styles.modalActions}>
+            <button
+              className={styles.btn}
+              style={{ padding: "0.5rem 1rem" }}
+              onClick={() => setShowCustomModal(false)}
+            >
+              Cancel
+            </button>
+            <button
+              className={`${styles.btn} ${styles.btnPrimary}`}
+              style={{ padding: "0.5rem 1.2rem" }}
+              onClick={handleCustomTextSubmit}
+            >
+              Start Typing
+            </button>
           </div>
         </div>
-      )}
-    </div>
+      </div>
+    )}
+  </div>
   );
 }
